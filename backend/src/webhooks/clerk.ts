@@ -6,16 +6,21 @@ import { db } from "../db/index.ts";
 import { users } from "../db/schema.ts";
 import { eq } from "drizzle-orm/sql/expressions/conditions";
 export async function clerkWebhookHandler(req: Request, res: Response) {
+  console.log("Clerk webhook received:", req.method, req.url);
+
   const env = getEnv();
 
   try {
     if (!env.CLERK_WEBHOOK_SECRET) {
+      console.error("CLERK_WEBHOOK_SECRET not configured");
       res.status(503).send("Clerk Webhook Secret is not configured");
       return;
     }
 
     const payload =
       req.body instanceof Buffer ? req.body.toString("utf8") : String(req.body);
+    console.log("Webhook payload length:", payload.length);
+
     const request = new Request("http://localhost/webhooks/clerk", {
       method: "POST",
       headers: new Headers(req.headers as HeadersInit),
@@ -24,6 +29,8 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
     const evt = await verifyWebhook(request, {
       signingSecret: env.CLERK_WEBHOOK_SECRET,
     });
+
+    console.log("Verified webhook event:", evt.type, evt.data.id);
 
     if (evt.type === "user.created" || evt.type === "user.updated") {
       const u = evt.data;
@@ -36,9 +43,10 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
         [u.first_name, u.last_name].filter(Boolean).join(" ") ||
         u.username ||
         null;
-      0;
 
       const role = parseRole(u.public_metadata?.role);
+
+      console.log("Inserting user:", { clerkUserId: u.id, email, displayName, role });
 
       await db
         .insert(users)
@@ -57,17 +65,22 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
             updatedAt: new Date(),
           },
         });
+
+      console.log("User inserted/updated successfully");
     }
 
     if (evt.type === "user.deleted") {
       const id = evt.data.id;
       if (id) {
+        console.log("Deleting user:", id);
         await db.delete(users).where(eq(users.clerkUserId, id));
+        console.log("User deleted successfully");
       }
     }
+
     res.json({ ok: true });
   } catch (error) {
-    console.log("Clerk Webhook Error", error);
+    console.error("Clerk Webhook Error:", error);
     res.status(400).send("Invalid webhook payload");
   }
 }
