@@ -7,6 +7,7 @@ import { getEnv } from "./lib/env.ts";
 
 import fs from "node:fs";
 import path from "node:path";
+import job from "./lib/cron.ts";
 
 const env = getEnv();
 
@@ -21,6 +22,10 @@ app.post("/webhooks/clerk", rawJson, async (req, res) => {
 app.use(express.json());
 app.use(cors());
 app.use(clerkMiddleware());
+
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 const publicDir = path.join(process.cwd(), "public");
 if (fs.existsSync(publicDir)) {
@@ -47,4 +52,7 @@ if (fs.existsSync(publicDir)) {
 
 app.listen(env.PORT, () => {
   console.log(`Server is Running on PORT ${env.PORT}`);
+  if (env.NODE_ENV === "production") {
+    job.start();
+  }
 });
