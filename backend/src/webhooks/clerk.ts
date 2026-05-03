@@ -48,33 +48,43 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
 
       console.log("Inserting user:", { clerkUserId: u.id, email, displayName, role });
 
-      await db
-        .insert(users)
-        .values({
-          clerkUserId: u.id,
-          email,
-          displayName,
-          role,
-        })
-        .onConflictDoUpdate({
-          target: users.clerkUserId,
-          set: {
+      try {
+        await db
+          .insert(users)
+          .values({
+            clerkUserId: u.id,
             email,
             displayName,
             role,
-            updatedAt: new Date(),
-          },
-        });
+          })
+          .onConflictDoUpdate({
+            target: users.clerkUserId,
+            set: {
+              email,
+              displayName,
+              role,
+              updatedAt: new Date(),
+            },
+          });
 
-      console.log("User inserted/updated successfully");
+        console.log("User inserted/updated successfully");
+      } catch (dbError) {
+        console.error("Database insert error:", dbError);
+        throw dbError;
+      }
     }
 
     if (evt.type === "user.deleted") {
       const id = evt.data.id;
       if (id) {
         console.log("Deleting user:", id);
-        await db.delete(users).where(eq(users.clerkUserId, id));
-        console.log("User deleted successfully");
+        try {
+          await db.delete(users).where(eq(users.clerkUserId, id));
+          console.log("User deleted successfully");
+        } catch (dbError) {
+          console.error("Database delete error:", dbError);
+          throw dbError;
+        }
       }
     }
 
