@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getAuth } from "@clerk/express";
-import { getLocalUser } from "../helpers/user.ts";
+import { getLocalUser } from "../lib/users.ts";
 
 const router = Router();
 

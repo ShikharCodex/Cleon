@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
-import { getLocalUser } from "../lib/user.js";
+import { getLocalUser } from "../lib/users.ts";
 import {
   streamChatDisplayName,
   getStreamChatServer,
