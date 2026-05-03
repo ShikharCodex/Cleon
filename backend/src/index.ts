@@ -4,6 +4,9 @@ import "dotenv/config";
 import { clerkMiddleware } from "@clerk/express";
 import { clerkWebhookHandler } from "./webhooks/clerk.ts";
 import { getEnv } from "./lib/env.ts";
+import meRouter from "./routes/meRouter.ts";
+import productsRouter from "./routes/productRouter.ts";
+import streamRouter from "./routes/streamRouter.ts";
 
 import fs from "node:fs";
 import path from "node:path";
@@ -27,6 +30,11 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+app.use("/api/me", meRouter);
+app.use("/api/products", productsRouter);
+app.use("/api/stream", streamRouter);
+
+
 const publicDir = path.join(process.cwd(), "public");
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
@@ -49,6 +57,8 @@ if (fs.existsSync(publicDir)) {
     });
   });
 }
+
+//todo: add error handling middleware
 
 app.listen(env.PORT, () => {
   console.log(`Server is Running on PORT ${env.PORT}`);
