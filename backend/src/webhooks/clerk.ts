@@ -21,9 +21,22 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
       req.body instanceof Buffer ? req.body.toString("utf8") : String(req.body);
     console.log("Webhook payload length:", payload.length);
 
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (typeof value === "string") {
+        headers.append(key, value);
+      } else if (Array.isArray(value)) {
+        for (const v of value) {
+          if (typeof v === "string") {
+            headers.append(key, v);
+          }
+        }
+      }
+    }
+
     const request = new Request("http://localhost/webhooks/clerk", {
       method: "POST",
-      headers: new Headers(req.headers as HeadersInit),
+      headers,
       body: payload,
     });
     const evt = await verifyWebhook(request, {
