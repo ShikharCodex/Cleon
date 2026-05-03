@@ -9,12 +9,19 @@ import productsRouter from "./routes/productRouter.ts";
 import streamRouter from "./routes/streamRouter.ts";
 import checkoutRouter from "./routes/checkoutRouter.ts";
 
-
 import fs from "node:fs";
 import path from "node:path";
 import job from "./lib/cron.ts";
 
-const env = getEnv();
+console.log("Starting server initialization...");
+let env;
+try {
+  env = getEnv();
+  console.log("Environment loaded successfully");
+} catch (e) {
+  console.error("Failed to load environment:", e);
+  process.exit(1);
+}
 
 const app = express();
 
