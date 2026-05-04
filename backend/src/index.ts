@@ -8,6 +8,7 @@ import meRouter from "./routes/meRouter.ts";
 import productsRouter from "./routes/productRouter.ts";
 import streamRouter from "./routes/streamRouter.ts";
 import checkoutRouter from "./routes/checkoutRouter.ts";
+import { polarWebhookHandler } from "./webhooks/polar.ts";
 
 import fs from "node:fs";
 import path from "node:path";
@@ -31,9 +32,9 @@ app.post("/webhooks/clerk", rawJson, async (req, res) => {
   await clerkWebhookHandler(req, res);
 });
 
-// app.post("/webhooks/polar", rawJson, async (req, res) => {
-//   await polarWebhookHandler(req, res);
-// });
+app.post("/webhooks/polar", rawJson, async (req, res) => {
+  await polarWebhookHandler(req, res);
+});
 
 app.use(express.json());
 app.use(cors());
