@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
+
+import * as Sentry from "@sentry/node";
 import { clerkMiddleware } from "@clerk/express";
 import { clerkWebhookHandler } from "./webhooks/clerk.ts";
 import { getEnv } from "./lib/env.ts";
@@ -13,6 +15,8 @@ import { polarWebhookHandler } from "./webhooks/polar.ts";
 import fs from "node:fs";
 import path from "node:path";
 import job from "./lib/cron.ts";
+import { unknown } from "zod";
+import { sentryClerkUserMiddleware } from "./middlewares/sentryClerkUser.ts";
 
 console.log("Starting server initialization...");
 let env;
@@ -39,6 +43,8 @@ app.post("/webhooks/polar", rawJson, async (req, res) => {
 app.use(express.json());
 app.use(cors());
 app.use(clerkMiddleware());
+app.use(sentryClerkUserMiddleware);
+
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
@@ -48,7 +54,6 @@ app.use("/api/me", meRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/stream", streamRouter);
 app.use("/api/checkout", checkoutRouter);
-
 
 const publicDir = path.join(process.cwd(), "public");
 if (fs.existsSync(publicDir)) {
@@ -72,8 +77,23 @@ if (fs.existsSync(publicDir)) {
     });
   });
 }
+//Sentry will be attached to the response object, so we need to set it up before any routes or middleware that might throw errors
+Sentry.setupExpressErrorHandler(app);
 
-//todo: add error handling middleware
+app.use(
+  (
+    _err: unknown,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    const sentryId = (res as express.Response & { sentry?: string }).sentry;
+    res.status(500).json({
+      error: "Internal Server Error",
+      ...(sentryId !== undefined && { sentryId }),
+    });
+  },
+);
 
 app.listen(env.PORT, () => {
   console.log(`Server is Running on PORT ${env.PORT}`);
