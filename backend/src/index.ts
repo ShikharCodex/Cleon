@@ -10,6 +10,7 @@ import meRouter from "./routes/meRouter.ts";
 import productsRouter from "./routes/productRouter.ts";
 import streamRouter from "./routes/streamRouter.ts";
 import adminRouter from "./routes/adminRouter.ts";
+import orderRouter from "./routes/orderRouter.ts";
 import checkoutRouter from "./routes/checkoutRouter.ts";
 import { polarWebhookHandler } from "./webhooks/polar.ts";
 
@@ -54,6 +55,7 @@ app.use("/api/products", productsRouter);
 app.use("/api/stream", streamRouter);
 app.use("/api/checkout", checkoutRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/orders", orderRouter);
 
 const publicDir = path.join(process.cwd(), "public");
 if (fs.existsSync(publicDir)) {
