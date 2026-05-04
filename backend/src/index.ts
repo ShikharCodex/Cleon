@@ -9,13 +9,13 @@ import { getEnv } from "./lib/env.ts";
 import meRouter from "./routes/meRouter.ts";
 import productsRouter from "./routes/productRouter.ts";
 import streamRouter from "./routes/streamRouter.ts";
+import adminRouter from "./routes/adminRouter.ts";
 import checkoutRouter from "./routes/checkoutRouter.ts";
 import { polarWebhookHandler } from "./webhooks/polar.ts";
 
 import fs from "node:fs";
 import path from "node:path";
 import job from "./lib/cron.ts";
-import { unknown } from "zod";
 import { sentryClerkUserMiddleware } from "./middlewares/sentryClerkUser.ts";
 
 console.log("Starting server initialization...");
@@ -45,7 +45,6 @@ app.use(cors());
 app.use(clerkMiddleware());
 app.use(sentryClerkUserMiddleware);
 
-
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
@@ -54,6 +53,7 @@ app.use("/api/me", meRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/stream", streamRouter);
 app.use("/api/checkout", checkoutRouter);
+app.use("/api/admin", adminRouter);
 
 const publicDir = path.join(process.cwd(), "public");
 if (fs.existsSync(publicDir)) {
